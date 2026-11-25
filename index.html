@@ -6,291 +6,163 @@
 <title>CaseWin</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  /* Базовые настройки и цвета CS2 */
   :root {
-    --bg: #0a0a0f;
-    --card-bg: #14141e;
-    --orange: #ff6b00;
-    --cyan: #00f0ff;
-    --text: #ffffff;
-    --text-muted: #888899;
+    --bg: #0a0a0f; --card-bg: #151520; --orange: #ff6b00; --cyan: #00f0ff; 
+    --text: #fff; --text-muted: #888; --nav-bg: rgba(20,20,30,0.95);
+    --r-common: #4ade80; --r-uncommon: #3b82f6; --r-epic: #a855f7; 
+    --r-mythic: #ec4899; --r-legendary: #eab308; --r-secret: #ef4444;
   }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none;}
+  body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; background-image: radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.1) 0%, transparent 40%); }
   
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-  
-  body {
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    overflow-x: hidden;
-    background-image: radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.15) 0%, transparent 50%);
-  }
-
-  /* Шапка профиля */
-  .header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    background: rgba(20, 20, 30, 0.8);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
+  .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(20,20,30,0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .user-info { display: flex; align-items: center; gap: 10px; }
-  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(45deg, var(--orange), #ff0044); display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; }
-  .username { font-weight: 600; font-size: 16px; }
+  .avatar { width: 35px; height: 35px; border-radius: 50%; background: var(--orange); display: flex; justify-content: center; align-items: center; font-weight: bold; }
+  .balance { background: var(--card-bg); padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(251, 191, 36, 0.4); color: #fbbf24; font-weight: bold; display: flex; gap: 5px;}
   
-  .balance {
-    background: #14141e;
-    padding: 8px 15px;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 240, 255, 0.3);
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: bold;
-    color: var(--cyan);
-  }
-  .balance span { color: var(--text); font-size: 14px;}
+  .content { padding: 15px; max-width: 600px; margin: 0 auto; }
+  .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .case-card { background: linear-gradient(145deg, #1a1a24, #0d0d14); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
+  .case-card:active { transform: scale(0.97); }
+  .case-img-container { width: 100%; height: 100px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; position: relative;}
+  .case-img { max-width: 100%; max-height: 100%; object-fit: contain; z-index: 1; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); }
+  .case-name { font-size: 13px; font-weight: 700; z-index: 1; text-align: center; margin-bottom: 4px; line-height: 1.2; height: 32px; display: flex; align-items: center; justify-content: center;}
+  .case-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; z-index: 1;}
+  .rarity-dots { display: flex; gap: 4px; margin-bottom: 10px; z-index: 1;}
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .case-price-btn { width: 100%; background: #252533; padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; z-index: 1; border: 1px solid rgba(255,255,255,0.05);}
+  .case-price-btn span { color: #fbbf24; }
+  .cart-icon { font-size: 14px; color: var(--text-muted); }
 
-  /* Главный экран */
-  .main-content {
-    width: 100%;
-    max-width: 500px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
-  }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 11px; gap: 4px; text-decoration: none; }
+  .nav-item.active { color: var(--orange); }
+  .nav-icon { font-size: 20px; }
 
-  /* Карточка кейса */
-  .case-card {
-    width: 100%;
-    background: linear-gradient(145deg, #181824, #0d0d14);
-    border-radius: 24px;
-    padding: 30px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* Свечение за кейсом */
-  .case-card::before {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 200px; height: 200px;
-    background: var(--orange);
-    filter: blur(80px);
-    opacity: 0.3;
-    z-index: 0;
-  }
-
-  .case-image-container {
-    width: 200px;
-    height: 200px;
-    z-index: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    transition: transform 0.3s ease;
-  }
-
-  .case-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
-  }
-
-  .case-title {
-    margin-top: 20px;
-    font-size: 24px;
-    font-weight: 800;
-    z-index: 1;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .case-price {
-    margin-top: 5px;
-    color: var(--text-muted);
-    font-size: 14px;
-    z-index: 1;
-  }
-
-  /* Кнопка открытия */
-  .open-btn {
-    margin-top: 30px;
-    width: 100%;
-    padding: 18px;
-    border-radius: 16px;
-    border: none;
-    background: linear-gradient(90deg, #ff0044, var(--orange));
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(255, 107, 0, 0.3);
-    transition: all 0.2s ease;
-    z-index: 1;
-  }
-
-  .open-btn:active {
-    transform: scale(0.96);
-    box-shadow: 0 5px 10px rgba(255, 107, 0, 0.2);
-  }
-
-  .open-btn:disabled {
-    background: #333;
-    color: #666;
-    box-shadow: none;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* Анимация выигрыша */
-  .win-message {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    background: rgba(20, 20, 30, 0.95);
-    border: 2px solid var(--cyan);
-    padding: 30px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: 0 0 50px rgba(0, 240, 255, 0.3);
-    z-index: 100;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .win-message.show { transform: translate(-50%, -50%) scale(1); }
-  .win-item { font-size: 40px; margin-bottom: 10px; }
-  .win-text { font-weight: bold; color: var(--cyan); font-size: 20px; }
-
+  .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; }
+  .modal.open { display: flex; }
+  .roulette-container { width: 100%; height: 120px; background: #111; overflow: hidden; position: relative; border-top: 2px solid var(--orange); border-bottom: 2px solid var(--orange); display: flex; align-items: center;}
+  .roulette-strip { display: flex; gap: 10px; transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); padding-left: 50%; }
+  .roulette-item { width: 90px; height: 100px; background: #222; border-radius: 8px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 10px; text-align: center; overflow: hidden; padding: 5px;}
+  .roulette-item img { width: 70px; height: 50px; object-fit: contain; margin-bottom: 5px;}
 </style>
 </head>
 <body>
 
-  <!-- Шапка -->
   <div class="header">
     <div class="user-info">
       <div class="avatar" id="userAvatar">U</div>
-      <div class="username" id="userName">Loading...</div>
+      <div style="font-weight:600; font-size:14px" id="userName">Loading...</div>
     </div>
-    <div class="balance">
-      ⭐️ <span>0.00</span>
-    </div>
+    <div class="balance">🪙 <span id="userBalance">0</span> WC</div>
   </div>
 
-  <!-- Основной контент -->
-  <div class="main-content">
-    
-    <div class="case-card">
-      <div class="case-image-container" id="caseContainer">
-        <!-- Сюда вставим картинку -->
-        <img src="https://i.ibb.co/6PXN1sV/case.png" alt="Case" class="case-image" id="caseImg">
-      </div>
-      <div class="case-title">Plush Pepe Case</div>
-      <div class="case-price">Стоимость: 100 ⭐️</div>
-      
-      <button class="open-btn" id="openBtn" onclick="openCase()">Открыть кейс</button>
-    </div>
-
+  <div class="content">
+    <div class="cases-grid" id="casesGrid"></div>
   </div>
 
-  <!-- Всплывающее окно выигрыша -->
-  <div class="win-message" id="winMessage">
-    <div class="win-item" id="winItem">🐸</div>
-    <div class="win-text">Поздравляем!</div>
-    <p style="color:#888; margin-top:5px; font-size:14px;">Вы выиграли <span id="winName">Plush Pepe</span></div>
+  <div class="bottom-nav">
+    <a href="#" class="nav-item active"><div class="nav-icon">📦</div>Кейсы</a>
+    <a href="#" class="nav-item"><div class="nav-icon">🔼</div>Апгрейд</a>
+    <a href="#" class="nav-item"><div class="nav-icon">⚔️</div>Батлы</a>
+    <a href="#" class="nav-item"><div class="nav-icon">🎒</div>Инвентарь</a>
+  </div>
+
+  <div class="modal" id="openModal">
+    <div class="roulette-container">
+      <div class="roulette-strip" id="rouletteStrip"></div>
+      <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:#fff; box-shadow: 0 0 10px #fff; transform:translateX(-50%); z-index:10;"></div>
+    </div>
+    <button onclick="closeCase()" style="margin-top:30px; padding:15px 30px; background:var(--card-bg); color:white; border:1px solid var(--text-muted); border-radius:10px; font-size:16px;">Забрать</button>
   </div>
 
   <script>
-    // 1. Инициализация Telegram Web App
     const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand(); // Разворачиваем на весь экран
+    if (tg) { tg.ready(); tg.expand(); const user = tg.initDataUnsafe?.user; if (user) { document.getElementById('userName').innerText = user.first_name; document.getElementById('userAvatar').innerText = user.first_name[0].toUpperCase(); } }
+
+    // ОБНОВЛЕННЫЕ ЦЕНЫ (от 49 до 199 999)
+    const CASES = [
+      { name: 'Бомба Кейс', price: 49, skinsCount: '35+ скинов', dots: ['common', 'common', 'common'] },
+      { name: 'Фарм Кейс', price: 99, skinsCount: '50+ скинов', dots: ['common', 'common', 'common'] },
+      { name: 'Граффити Бокс', price: 199, skinsCount: '50+ скинов', dots: ['common', 'uncommon', 'epic'] },
+      { name: 'Спецназ Бокс', price: 299, skinsCount: '45+ скинов', dots: ['common', 'common', 'uncommon'] },
+      { name: 'Террористический Кейс', price: 399, skinsCount: '45+ скинов', dots: ['common', 'common', 'uncommon'] },
+      { name: 'Кейс Удачи', price: 499, skinsCount: '40+ скинов', dots: ['common', 'uncommon', 'legendary'] },
+      { name: 'Пустынный Дюны', price: 799, skinsCount: '40+ скинов', dots: ['common', 'uncommon', 'epic'] },
+      { name: 'Паттерн Кейс', price: 999, skinsCount: '75+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
+      { name: 'Ретро Кейс', price: 1499, skinsCount: '70+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
+      { name: 'Зимний Кейс', price: 1999, skinsCount: '55+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
+      { name: 'Механический Кейс', price: 2499, skinsCount: '80+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
+      { name: 'Ночной Охотник', price: 2999, skinsCount: '60+ скинов', dots: ['uncommon', 'epic', 'epic'] },
+      { name: 'Охотник на Скины', price: 3499, skinsCount: '100+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
+      { name: 'Космический Бокс', price: 4999, skinsCount: '65+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
+      { name: 'Агентский Кейс', price: 5999, skinsCount: '30+ агентов', dots: ['epic', 'epic', 'legendary'] },
+      { name: 'Асимов Кейс', price: 7999, skinsCount: '60+ скинов', dots: ['legendary', 'legendary'] },
+      { name: 'Битва Скинов', price: 9999, skinsCount: '100+ скинов', dots: ['epic', 'epic', 'legendary'] },
+      { name: 'Тайное Сокровище', price: 14999, skinsCount: '90+ скинов', dots: ['epic', 'epic', 'epic'] },
+      { name: 'Кровавая Паутина', price: 19999, skinsCount: '50+ скинов', dots: ['legendary', 'legendary'] },
+      { name: 'Изi Нож', price: 34999, skinsCount: '120+ скинов', dots: ['secret', 'secret', 'secret'] },
+      { name: 'Градиент Бокс', price: 49999, skinsCount: '150+ скинов', dots: ['mythic', 'mythic'] },
+      { name: 'Перчаточный Кейс', price: 99999, skinsCount: '40+ перчаток', dots: ['mythic', 'mythic', 'mythic'] },
+      { name: 'Драгон Лор', price: 149999, skinsCount: '80+ скинов', dots: ['mythic', 'mythic', 'mythic'] },
+      { name: 'Легендарный Кейс', price: 199999, skinsCount: '200+ скинов', dots: ['legendary', 'legendary', 'secret'] }
+    ];
+
+    const dotColors = { common: '#4ade80', uncommon: '#3b82f6', epic: '#a855f7', mythic: '#ec4899', legendary: '#eab308', secret: '#ef4444' };
+    const grid = document.getElementById('casesGrid');
+    
+    CASES.forEach((c) => {
+      let dotsHtml = c.dots.map(d => `<div class="dot" style="background:${dotColors[d]}"></div>`).join('');
+      // Форматируем цену с пробелами (199 999)
+      let formattedPrice = c.price.toLocaleString('ru-RU'); 
       
-      // Получаем данные пользователя
-      const user = tg.initDataUnsafe?.user;
-      if (user) {
-        document.getElementById('userName').innerText = user.first_name;
-        if (user.first_name) {
-            document.getElementById('userAvatar').innerText = user.first_name[0].toUpperCase();
-        }
-      }
-    }
+      grid.innerHTML += `
+        <div class="case-card" onclick="openCaseRoulette('${c.name}')">
+          <div class="case-img-container"><img src="https://i.ibb.co/6PXN1sV/case.png" class="case-img"></div>
+          <div class="case-name">${c.name}</div>
+          <div class="case-desc">${c.skinsCount}</div>
+          <div class="rarity-dots">${dotsHtml}</div>
+          <div class="case-price-btn"><span>${formattedPrice} WC</span><span class="cart-icon">🛒</span></div>
+        </div>`;
+    });
 
-    // 2. Логика открытия кейса (пока локальная)
+    // БАЗА СКИНОВ С ОФИЦИАЛЬНОГО CDN CS2 (картинки будут грузиться сами)
+    const DEMO_SKINS = [
+      { name: 'AK-47 | Redline', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_ak47_cu_ak47_cobra_light_large.png' },
+      { name: 'AWP | Dragon Lore', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_awp_cu_awp_dragon_lore_light_large.png' },
+      { name: 'Karambit | Doppler', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_knife_karambit_cu_karambit_doppler_phase2_light_large.png' },
+      { name: 'M4A4 | Howl', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_m4a1_cu_m4a1_howl_light_large.png' },
+      { name: 'Glock-18 | Fade', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_glock_cu_glock_deagle_fade_light_large.png' },
+      { name: 'Desert Eagle | Blaze', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_deagle_cu_deagle_aureus_light_large.png' },
+      { name: 'Butterfly | Fade', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_knife_butterfly_cu_knife_butterfly_fade_light_large.png' },
+      { name: 'Sport Gloves | Pandora', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/studded_brokenfang_gloves_go_gloves_sporty_black_webbing_yellow_light_large.png' }
+    ];
+
     let isOpening = false;
-
-    function openCase() {
+    function openCaseRoulette(caseName) {
       if (isOpening) return;
       isOpening = true;
-      
-      const btn = document.getElementById('openBtn');
-      const caseImg = document.getElementById('caseImg');
-      const winMessage = document.getElementById('winMessage');
-      
-      btn.innerText = "Открываем...";
-      btn.disabled = true;
-      
-      // Анимация тряски кейса
-      let shakeCount = 0;
-      const shakeInterval = setInterval(() => {
-        caseImg.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) rotate(${Math.random() * 10 - 5}deg)`;
-        shakeCount++;
-        
-        if (shakeCount > 15) {
-          clearInterval(shakeInterval);
-          caseImg.style.transform = 'scale(1)';
-          
-          // Выдаем рандомный приз
-          const prizes = [
-            { emoji: '🐸', name: 'Plush Pepe' },
-            { emoji: '🎁', name: 'Telegram Gift' },
-            { emoji: '🔪', name: 'Karambit Knife' },
-            { emoji: '🔫', name: 'AK-47' }
-          ];
-          const randomPrize = prizes[Math.floor(Math.random() * prizes.length)];
-          
-          // Показываем окно
-          document.getElementById('winItem').innerText = randomPrize.emoji;
-          document.getElementById('winName').innerText = randomPrize.name;
-          winMessage.classList.add('show');
-          
-          // Возвращаем кнопку
-          btn.innerText = "Открыть еще раз";
-          btn.disabled = false;
-          isOpening = false;
-          
-          // Скрываем окно через 3 секунды
-          setTimeout(() => {
-            winMessage.classList.remove('show');
-          }, 3000);
-        }
-      }, 50);
+      const modal = document.getElementById('openModal');
+      const strip = document.getElementById('rouletteStrip');
+      modal.classList.add('open');
+      strip.style.transition = 'none'; strip.style.transform = 'translateX(0px)'; strip.innerHTML = '';
+
+      for(let i = 0; i < 50; i++) {
+        const skin = DEMO_SKINS[Math.floor(Math.random() * DEMO_SKINS.length)];
+        strip.innerHTML += `<div class="roulette-item"><img src="${skin.img}"><span>${skin.name}</span></div>`;
+      }
+
+      setTimeout(() => {
+        strip.style.transition = 'transform 3.5s cubic-bezier(0.1, 0.7, 0.1, 1)';
+        const offset = 40 * 100; // Ширина + отступ
+        strip.style.transform = `translateX(-${offset}px)`;
+      }, 100);
+    }
+
+    function closeCase() {
+      document.getElementById('openModal').classList.remove('open');
+      isOpening = false;
     }
   </script>
 </body>
-  </html>
+</html>
