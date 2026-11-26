@@ -7,44 +7,69 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg: #0a0a0f; --card-bg: #151520; --orange: #ff6b00; --cyan: #00f0ff; 
+    --bg: #0a0a0f; --card-bg: #151520; --orange: #ff6b00; --cyan: #00f0ff;
     --text: #fff; --text-muted: #888; --nav-bg: rgba(20,20,30,0.95);
-    --r-common: #4ade80; --r-uncommon: #3b82f6; --r-epic: #a855f7; 
+    --r-common: #4ade80; --r-uncommon: #3b82f6; --r-epic: #a855f7;
     --r-mythic: #ec4899; --r-legendary: #eab308; --r-secret: #ef4444;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; user-select: none;}
-  body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; background-image: radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.1) 0%, transparent 40%); }
+  body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; background-image: radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.1) 0%, transparent 40%); overflow-x: hidden;}
   
   .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(20,20,30,0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .user-info { display: flex; align-items: center; gap: 10px; }
   .avatar { width: 35px; height: 35px; border-radius: 50%; background: var(--orange); display: flex; justify-content: center; align-items: center; font-weight: bold; }
   .balance { background: var(--card-bg); padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(251, 191, 36, 0.4); color: #fbbf24; font-weight: bold; display: flex; gap: 5px;}
-  
-  .content { padding: 15px; max-width: 600px; margin: 0 auto; }
+
+  .live-drop { width: 100%; height: 40px; background: #111; overflow: hidden; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .live-strip { display: flex; gap: 15px; padding: 0 15px; animation: scrollLive 20s linear infinite; white-space: nowrap; }
+  .live-item { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;}
+  .live-item span { color: var(--cyan); font-weight: bold; }
+  @keyframes scrollLive { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+  .screen { display: none; padding: 15px; max-width: 600px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
   .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .case-card { background: linear-gradient(145deg, #1a1a24, #0d0d14); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
+  .case-card { background: linear-gradient(145deg, #1a1a24, #0d0d14); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+  .case-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255, 107, 0, 0.2); border-color: rgba(255, 107, 0, 0.3); }
   .case-card:active { transform: scale(0.97); }
   .case-img-container { width: 100%; height: 100px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; position: relative;}
-  .case-img { max-width: 100%; max-height: 100%; object-fit: contain; z-index: 1; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); }
+  .case-img { max-width: 100%; max-height: 100%; object-fit: contain; z-index: 1; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); transition: transform 0.3s; }
   .case-name { font-size: 13px; font-weight: 700; z-index: 1; text-align: center; margin-bottom: 4px; line-height: 1.2; height: 32px; display: flex; align-items: center; justify-content: center;}
   .case-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; z-index: 1;}
   .rarity-dots { display: flex; gap: 4px; margin-bottom: 10px; z-index: 1;}
   .dot { width: 6px; height: 6px; border-radius: 50%; }
   .case-price-btn { width: 100%; background: #252533; padding: 8px 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; z-index: 1; border: 1px solid rgba(255,255,255,0.05);}
   .case-price-btn span { color: #fbbf24; }
-  .cart-icon { font-size: 14px; color: var(--text-muted); }
 
-  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-  .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 11px; gap: 4px; text-decoration: none; }
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 100; display: none; justify-content: center; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal-content { width: 100%; max-width: 600px; background: var(--card-bg); border-radius: 20px 20px 0 0; padding: 20px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: var(--orange); text-align: center;}
+  
+  .skin-list { display: flex; flex-direction: column; gap: 8px; max-height: 40vh; overflow-y: auto; padding-right: 5px; }
+  .skin-row { display: flex; align-items: center; gap: 12px; background: #1c1c26; padding: 8px 12px; border-radius: 10px; border-left: 4px solid var(--r-common); }
+  .skin-row img { width: 55px; height: 40px; object-fit: contain; }
+  .skin-info { flex: 1; }
+  .skin-info .name { font-size: 12px; font-weight: bold; }
+  .skin-info .chance { font-size: 10px; color: var(--text-muted); }
+  .skin-price { font-size: 12px; font-weight: bold; color: #fbbf24; }
+
+  .open-btn { width: 100%; padding: 15px; background: linear-gradient(90deg, var(--orange), #ff0044); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+  .open-btn.secondary { background: #252533; color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
+
+  .roulette-container { width: 100%; height: 140px; background: #0a0a0f; overflow: hidden; position: relative; border-top: 2px solid var(--orange); border-bottom: 2px solid var(--orange); display: flex; align-items: center; border-radius: 12px; margin-top: 15px; }
+  .roulette-strip { display: flex; gap: 8px; transition: transform 5s cubic-bezier(0.1, 0.7, 0.1, 1.1); padding-left: 50%; }
+  .roulette-item { width: 95px; height: 115px; background: linear-gradient(180deg, #1c1c26, #111); border-radius: 10px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 9px; text-align: center; padding: 5px; border: 1px solid rgba(255,255,255,0.05); }
+  .roulette-item img { width: 75px; height: 55px; object-fit: contain; }
+  .roulette-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; background: #fff; box-shadow: 0 0 15px #fff; transform: translateX(-50%); z-index: 10; }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--nav-bg); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); z-index: 100; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-muted); font-size: 11px; gap: 4px; cursor: pointer; }
   .nav-item.active { color: var(--orange); }
   .nav-icon { font-size: 20px; }
-
-  .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; }
-  .modal.open { display: flex; }
-  .roulette-container { width: 100%; height: 120px; background: #111; overflow: hidden; position: relative; border-top: 2px solid var(--orange); border-bottom: 2px solid var(--orange); display: flex; align-items: center;}
-  .roulette-strip { display: flex; gap: 10px; transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); padding-left: 50%; }
-  .roulette-item { width: 90px; height: 100px; background: #222; border-radius: 8px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 10px; text-align: center; overflow: hidden; padding: 5px;}
-  .roulette-item img { width: 70px; height: 50px; object-fit: contain; margin-bottom: 5px;}
 </style>
 </head>
 <body>
@@ -52,60 +77,73 @@
   <div class="header">
     <div class="user-info">
       <div class="avatar" id="userAvatar">U</div>
-      <div style="font-weight:600; font-size:14px" id="userName">Loading...</div>
+      <div id="userName">Loading...</div>
     </div>
     <div class="balance">🪙 <span id="userBalance">0</span> WC</div>
   </div>
 
-  <div class="content">
-    <div class="cases-grid" id="casesGrid"></div>
-  </div>
+  <div class="live-drop"><div class="live-strip" id="liveStrip"></div></div>
+
+  <div id="screen-cases" class="screen active"><div class="cases-grid" id="casesGrid"></div></div>
+  <div id="screen-inventory" class="screen"><h2 style="margin-bottom:15px;">Инвентарь</h2><div id="inventoryGrid" class="cases-grid"></div></div>
+  <div id="screen-profile" class="screen"><h2>Профиль</h2></div>
 
   <div class="bottom-nav">
-    <a href="#" class="nav-item active"><div class="nav-icon">📦</div>Кейсы</a>
-    <a href="#" class="nav-item"><div class="nav-icon">🔼</div>Апгрейд</a>
-    <a href="#" class="nav-item"><div class="nav-icon">⚔️</div>Батлы</a>
-    <a href="#" class="nav-item"><div class="nav-icon">🎒</div>Инвентарь</a>
+    <a class="nav-item active" onclick="switchTab('cases', this)"><div class="nav-icon">📦</div>Кейсы</a>
+    <a class="nav-item" onclick="switchTab('inventory', this)"><div class="nav-icon">🎒</div>Инвентарь</a>
+    <a class="nav-item" onclick="switchTab('profile', this)"><div class="nav-icon">👤</div>Профиль</a>
   </div>
 
-  <div class="modal" id="openModal">
-    <div class="roulette-container">
-      <div class="roulette-strip" id="rouletteStrip"></div>
-      <div style="position:absolute; left:50%; top:0; bottom:0; width:2px; background:#fff; box-shadow: 0 0 10px #fff; transform:translateX(-50%); z-index:10;"></div>
-    </div>
-    <button onclick="closeCase()" style="margin-top:30px; padding:15px 30px; background:var(--card-bg); color:white; border:1px solid var(--text-muted); border-radius:10px; font-size:16px;">Забрать</button>
-  </div>
+  <div class="modal-overlay" id="caseModal"><div class="modal-content" id="modalContent"></div></div>
 
   <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); const user = tg.initDataUnsafe?.user; if (user) { document.getElementById('userName').innerText = user.first_name; document.getElementById('userAvatar').innerText = user.first_name[0].toUpperCase(); } }
+    // ⚠️ ВОТ ТУТ ТВОЯ ССЫЛКА ИЗ PYTHONANYWHERE
+    const API_URL = "https://offhalal.pythonanywhere.com"; 
 
-    // ОБНОВЛЕННЫЕ ЦЕНЫ (от 49 до 199 999)
+    const tg = window.Telegram?.WebApp;
+    let currentUserId = 1;
+    if (tg) {
+      tg.ready(); tg.expand();
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        currentUserId = user.id;
+        document.getElementById('userName').innerText = user.first_name;
+        document.getElementById('userAvatar').innerText = user.first_name[0].toUpperCase();
+      }
+    }
+
+    function switchTab(tabName, element) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('screen-' + tabName).classList.add('active');
+      element.classList.add('active');
+    }
+
     const CASES = [
-      { name: 'Бомба Кейс', price: 49, skinsCount: '35+ скинов', dots: ['common', 'common', 'common'] },
-      { name: 'Фарм Кейс', price: 99, skinsCount: '50+ скинов', dots: ['common', 'common', 'common'] },
-      { name: 'Граффити Бокс', price: 199, skinsCount: '50+ скинов', dots: ['common', 'uncommon', 'epic'] },
-      { name: 'Спецназ Бокс', price: 299, skinsCount: '45+ скинов', dots: ['common', 'common', 'uncommon'] },
-      { name: 'Террористический Кейс', price: 399, skinsCount: '45+ скинов', dots: ['common', 'common', 'uncommon'] },
-      { name: 'Кейс Удачи', price: 499, skinsCount: '40+ скинов', dots: ['common', 'uncommon', 'legendary'] },
-      { name: 'Пустынный Дюны', price: 799, skinsCount: '40+ скинов', dots: ['common', 'uncommon', 'epic'] },
-      { name: 'Паттерн Кейс', price: 999, skinsCount: '75+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
-      { name: 'Ретро Кейс', price: 1499, skinsCount: '70+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
-      { name: 'Зимний Кейс', price: 1999, skinsCount: '55+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
-      { name: 'Механический Кейс', price: 2499, skinsCount: '80+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
-      { name: 'Ночной Охотник', price: 2999, skinsCount: '60+ скинов', dots: ['uncommon', 'epic', 'epic'] },
-      { name: 'Охотник на Скины', price: 3499, skinsCount: '100+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
-      { name: 'Космический Бокс', price: 4999, skinsCount: '65+ скинов', dots: ['uncommon', 'uncommon', 'epic'] },
-      { name: 'Агентский Кейс', price: 5999, skinsCount: '30+ агентов', dots: ['epic', 'epic', 'legendary'] },
-      { name: 'Асимов Кейс', price: 7999, skinsCount: '60+ скинов', dots: ['legendary', 'legendary'] },
-      { name: 'Битва Скинов', price: 9999, skinsCount: '100+ скинов', dots: ['epic', 'epic', 'legendary'] },
-      { name: 'Тайное Сокровище', price: 14999, skinsCount: '90+ скинов', dots: ['epic', 'epic', 'epic'] },
-      { name: 'Кровавая Паутина', price: 19999, skinsCount: '50+ скинов', dots: ['legendary', 'legendary'] },
-      { name: 'Изi Нож', price: 34999, skinsCount: '120+ скинов', dots: ['secret', 'secret', 'secret'] },
-      { name: 'Градиент Бокс', price: 49999, skinsCount: '150+ скинов', dots: ['mythic', 'mythic'] },
-      { name: 'Перчаточный Кейс', price: 99999, skinsCount: '40+ перчаток', dots: ['mythic', 'mythic', 'mythic'] },
-      { name: 'Драгон Лор', price: 149999, skinsCount: '80+ скинов', dots: ['mythic', 'mythic', 'mythic'] },
-      { name: 'Легендарный Кейс', price: 199999, skinsCount: '200+ скинов', dots: ['legendary', 'legendary', 'secret'] }
+      { id: 1, name: 'Тактический ящик', price: 49, skinsCount: '15 скинов', img: 'image-row-01-col-01.png', dots: ['common', 'common', 'common'] },
+      { id: 2, name: 'Армейский ящик', price: 99, skinsCount: '12 скинов', img: 'image-row-01-col-03.png', dots: ['common', 'common', 'uncommon'] },
+      { id: 3, name: 'Контрабандный ящик', price: 149, skinsCount: '18 скинов', img: 'image-row-01-col-06.png', dots: ['common', 'uncommon', 'uncommon'] },
+      { id: 4, name: 'Неоновый глитч', price: 299, skinsCount: '20 скинов', img: 'image-row-01-col-02.png', dots: ['uncommon', 'uncommon', 'epic'] },
+      { id: 5, name: 'Сейф с секретами', price: 499, skinsCount: '22 скина', img: 'image-row-01-col-05.png', dots: ['uncommon', 'epic'] },
+      { id: 6, name: 'Кибер-Панк', price: 799, skinsCount: '25 скинов', img: 'image-row-01-col-04.png', dots: ['epic', 'epic'] },
+      { id: 7, name: 'Пустынный "Дюна"', price: 1299, skinsCount: '20 скинов', img: 'image-row-02-col-04.png', dots: ['epic', 'epic'] },
+      { id: 8, name: 'Кейс "Азимов"', price: 1999, skinsCount: '15 скинов', img: 'image-row-02-col-03.png', dots: ['epic', 'legendary'] },
+      { id: 9, name: 'Кейс Удачи', price: 2499, skinsCount: '10 скинов', img: 'image-row-03-col-04.png', dots: ['epic', 'legendary'] },
+      { id: 10, name: 'Космический рейнджер', price: 3499, skinsCount: '18 скинов', img: 'image-row-02-col-01.png', dots: ['legendary', 'legendary'] },
+      { id: 11, name: 'Зимний тактический', price: 4999, skinsCount: '22 скина', img: 'image-row-02-col-02.png', dots: ['legendary', 'legendary'] },
+      { id: 12, name: 'Кровавая паутина', price: 6999, skinsCount: '16 скинов', img: 'image-row-02-col-05.png', dots: ['legendary', 'mythic'] },
+      { id: 13, name: 'Механический', price: 8999, skinsCount: '20 скинов', img: 'image-row-02-col-06.png', dots: ['legendary', 'mythic'] },
+      { id: 14, name: 'Ретро-аркада', price: 11999, skinsCount: '14 скинов', img: 'image-row-03-col-01.png', dots: ['mythic', 'mythic'] },
+      { id: 15, name: 'Ночной охотник', price: 14999, skinsCount: '18 скинов', img: 'image-row-03-col-02.png', dots: ['mythic', 'mythic'] },
+      { id: 16, name: 'Граффити-кейс', price: 19999, skinsCount: '25 скинов', img: 'image-row-03-col-03.png', dots: ['mythic', 'secret'] },
+      { id: 17, name: 'Кейс "Спецназ"', price: 24999, skinsCount: '12 скинов', img: 'image-row-03-col-05.png', dots: ['mythic', 'secret'] },
+      { id: 18, name: 'Кейс "Террорист"', price: 34999, skinsCount: '10 скинов', img: 'image-row-03-col-06.png', dots: ['secret', 'secret'] },
+      { id: 19, name: 'Тайное сокровище', price: 49999, skinsCount: '15 скинов', img: 'image-row-04-col-01.png', dots: ['secret', 'secret'] },
+      { id: 20, name: 'Кейс "Градиент"', price: 69999, skinsCount: '8 скинов', img: 'image-row-04-col-02.png', dots: ['secret', 'secret'] },
+      { id: 21, name: 'Ножевой ящик "Клинок"', price: 99999, skinsCount: '5 ножей', img: 'image-row-04-col-03.png', dots: ['secret', 'secret', 'secret'] },
+      { id: 22, name: 'Перчаточный кейс', price: 129999, skinsCount: '6 перчаток', img: 'image-row-04-col-04.png', dots: ['secret', 'secret', 'secret'] },
+      { id: 23, name: 'Кейс "Драгон Лор"', price: 169999, skinsCount: '3 скина', img: 'image-row-04-col-05.png', dots: ['secret', 'secret', 'secret'] },
+      { id: 24, name: 'Кейс "Легенда"', price: 199999, skinsCount: '12 скинов', img: 'image-row-04-col-06.png', dots: ['secret', 'secret', 'secret'] }
     ];
 
     const dotColors = { common: '#4ade80', uncommon: '#3b82f6', epic: '#a855f7', mythic: '#ec4899', legendary: '#eab308', secret: '#ef4444' };
@@ -113,56 +151,110 @@
     
     CASES.forEach((c) => {
       let dotsHtml = c.dots.map(d => `<div class="dot" style="background:${dotColors[d]}"></div>`).join('');
-      // Форматируем цену с пробелами (199 999)
-      let formattedPrice = c.price.toLocaleString('ru-RU'); 
-      
       grid.innerHTML += `
-        <div class="case-card" onclick="openCaseRoulette('${c.name}')">
-          <div class="case-img-container"><img src="https://i.ibb.co/6PXN1sV/case.png" class="case-img"></div>
+        <div class="case-card" onclick="openCasePreview(${c.id})">
+          <div class="case-img-container"><img src="${c.img}" class="case-img" onerror="this.src='https://i.ibb.co/6PXN1sV/case.png'"></div>
           <div class="case-name">${c.name}</div>
           <div class="case-desc">${c.skinsCount}</div>
           <div class="rarity-dots">${dotsHtml}</div>
-          <div class="case-price-btn"><span>${formattedPrice} WC</span><span class="cart-icon">🛒</span></div>
+          <div class="case-price-btn"><span>${c.price.toLocaleString('ru-RU')} WC</span>🛒</div>
         </div>`;
     });
 
-    // БАЗА СКИНОВ С ОФИЦИАЛЬНОГО CDN CS2 (картинки будут грузиться сами)
-    const DEMO_SKINS = [
-      { name: 'AK-47 | Redline', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_ak47_cu_ak47_cobra_light_large.png' },
-      { name: 'AWP | Dragon Lore', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_awp_cu_awp_dragon_lore_light_large.png' },
-      { name: 'Karambit | Doppler', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_knife_karambit_cu_karambit_doppler_phase2_light_large.png' },
-      { name: 'M4A4 | Howl', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_m4a1_cu_m4a1_howl_light_large.png' },
-      { name: 'Glock-18 | Fade', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_glock_cu_glock_deagle_fade_light_large.png' },
-      { name: 'Desert Eagle | Blaze', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_deagle_cu_deagle_aureus_light_large.png' },
-      { name: 'Butterfly | Fade', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/weapon_knife_butterfly_cu_knife_butterfly_fade_light_large.png' },
-      { name: 'Sport Gloves | Pandora', img: 'https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/images/econ/default_generated/studded_brokenfang_gloves_go_gloves_sporty_black_webbing_yellow_light_large.png' }
-    ];
+    let allSkins = [];
+    async function fetchSkins() {
+      try {
+        const res = await fetch('https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json');
+        const data = await res.json();
+        allSkins = data.filter(s => s.image).slice(0, 150); 
+      } catch (e) { console.log(e); }
+    }
+    fetchSkins();
 
-    let isOpening = false;
-    function openCaseRoulette(caseName) {
-      if (isOpening) return;
-      isOpening = true;
-      const modal = document.getElementById('openModal');
-      const strip = document.getElementById('rouletteStrip');
-      modal.classList.add('open');
-      strip.style.transition = 'none'; strip.style.transform = 'translateX(0px)'; strip.innerHTML = '';
+    function openCasePreview(caseId) {
+      const c = CASES.find(x => x.id === caseId);
+      const content = document.getElementById('modalContent');
 
-      for(let i = 0; i < 50; i++) {
-        const skin = DEMO_SKINS[Math.floor(Math.random() * DEMO_SKINS.length)];
-        strip.innerHTML += `<div class="roulette-item"><img src="${skin.img}"><span>${skin.name}</span></div>`;
+      let previewSkins = allSkins.slice(0, 5);
+      let listHtml = previewSkins.map((s, i) => {
+        let chance = i === 0 ? '60%' : i === 1 ? '25%' : i === 2 ? '10%' : i === 3 ? '4.9%' : '0.1%';
+        let color = i < 2 ? 'var(--r-common)' : i < 4 ? 'var(--r-epic)' : 'var(--r-legendary)';
+        return `
+          <div class="skin-row" style="border-color: ${color}">
+            <img src="${s.image}">
+            <div class="skin-info"><div class="name">${s.name}</div><div class="chance">Шанс: ${chance}</div></div>
+          </div>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="modal-title">${c.name}</div>
+        <div class="skin-list">${listHtml}</div>
+        <button class="open-btn" onclick="startRoulette(${c.price})">Открыть за ${c.price.toLocaleString('ru-RU')} WC</button>
+        <button class="open-btn secondary" onclick="closeModal()">Закрыть</button>
+      `;
+      document.getElementById('caseModal').classList.add('open');
+    }
+
+    async function startRoulette(casePrice) {
+      const content = document.getElementById('modalContent');
+      content.innerHTML = `<div style="text-align:center; padding:20px; color:var(--orange);">Запрос к серверу...</div>`;
+
+      try {
+        const response = await fetch(`${API_URL}/api/open_case`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: currentUserId, case_price: casePrice })
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          content.innerHTML = `<div style="text-align:center; color:red; padding:20px;">${result.error}</div>
+                               <button class="open-btn secondary" onclick="closeModal()">Закрыть</button>`;
+          return;
+        }
+
+        document.getElementById('userBalance').innerText = result.new_balance;
+
+        content.innerHTML = `
+          <div style="text-align:center; margin-bottom:10px; font-weight:bold; color:var(--orange);">Рулетка</div>
+          <div class="roulette-container">
+            <div class="roulette-strip" id="rouletteStrip"></div>
+            <div class="roulette-line"></div>
+          </div>
+          <button class="open-btn secondary" style="margin-top:20px;" onclick="closeModal()">Забрать</button>
+        `;
+
+        const strip = document.getElementById('rouletteStrip');
+        const itemWidth = 103; 
+        const winnerIndex = 42;
+
+        for(let i = 0; i < 50; i++) {
+          let skin = allSkins.length > 0 ? allSkins[Math.floor(Math.random() * allSkins.length)] : { name: 'Скин', image: '' };
+          if (i === winnerIndex) skin = { name: result.skin, image: result.img };
+          
+          strip.innerHTML += `
+            <div class="roulette-item">
+              <img src="${skin.image}">
+              <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%;">${skin.name}</div>
+            </div>`;
+        }
+
+        setTimeout(() => {
+          const containerWidth = document.querySelector('.roulette-container').offsetWidth;
+          const centerOffset = (containerWidth / 2) - (itemWidth / 2);
+          strip.style.transform = `translateX(-${(winnerIndex * itemWidth) - centerOffset}px)`;
+          
+          setTimeout(() => { alert(`Ты выбил: ${result.skin}\nЦена: ${result.price} WC`); }, 5000);
+        }, 50);
+
+      } catch (err) {
+        content.innerHTML = `<div style="text-align:center; color:red; padding:20px;">Ошибка связи с сервером</div>
+                             <button class="open-btn secondary" onclick="closeModal()">Закрыть</button>`;
       }
-
-      setTimeout(() => {
-        strip.style.transition = 'transform 3.5s cubic-bezier(0.1, 0.7, 0.1, 1)';
-        const offset = 40 * 100; // Ширина + отступ
-        strip.style.transform = `translateX(-${offset}px)`;
-      }, 100);
     }
 
-    function closeCase() {
-      document.getElementById('openModal').classList.remove('open');
-      isOpening = false;
-    }
+    function closeModal() { document.getElementById('caseModal').classList.remove('open'); }
   </script>
 </body>
 </html>
